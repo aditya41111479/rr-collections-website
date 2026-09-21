@@ -1159,14 +1159,18 @@
         createdAt: serverTimestamp()
       });
 
-      /* Send email via EmailJS */
-      await emailjs.send('service_kydxgeq', 'tntpk9h', {
-        from_name:  name,
-        phone:      phone,
-        from_email: email || 'Not provided',
-        interest:   interest || 'Not specified',
-        message:    message || 'No message'
-      });
+      /* Send email via EmailJS (won't block if fails) */
+      try {
+        await emailjs.send('service_kydxgeq', 'tntpk9h', {
+          from_name:  name,
+          phone:      phone,
+          from_email: email || 'Not provided',
+          interest:   interest || 'Not specified',
+          message:    message || 'No message'
+        });
+      } catch(emailErr) {
+        console.log('Email failed but enquiry saved to Firebase:', emailErr);
+      }
 
       /* Show success */
       btn.style.display = 'none';
