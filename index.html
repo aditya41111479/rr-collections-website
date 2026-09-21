@@ -1096,29 +1096,6 @@
     document.getElementById('mobile-nav').classList.toggle('open');
   }
 
-  /* Contact form submit */
-  function submitForm() {
-    const name    = document.getElementById('name').value.trim();
-    const phone   = document.getElementById('phone').value.trim();
-    const email   = document.getElementById('email').value.trim();
-    const message = document.getElementById('message').value.trim();
-
-    if (!name || !phone) {
-      alert('Please enter your name and phone number.');
-      return;
-    }
-
-    /* Show success message */
-    document.querySelector('.form-submit').style.display = 'none';
-    document.getElementById('form-success').style.display = 'block';
-
-    /* Clear fields */
-    ['name','phone','email','message'].forEach(id => {
-      document.getElementById(id).value = '';
-    });
-    document.getElementById('interest').selectedIndex = 0;
-  }
-
   /* Scroll reveal animation */
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
@@ -1135,6 +1112,88 @@
     el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
     observer.observe(el);
   });
+</script>
+
+<!-- EmailJS -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script>emailjs.init('0E91c5n4CC_YhGRRK');</script>
+
+<!-- Firebase + EmailJS Contact Form -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA5s1N2A2dl_eKMaSuviMuHT9O8RCJG4-M",
+    authDomain: "rr-collections.firebaseapp.com",
+    projectId: "rr-collections",
+    storageBucket: "rr-collections.firebasestorage.app",
+    messagingSenderId: "751695680040",
+    appId: "1:751695680040:web:656f9e89b76e7c26909b1d"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  window.submitForm = async function() {
+    const name     = document.getElementById('name').value.trim();
+    const phone    = document.getElementById('phone').value.trim();
+    const email    = document.getElementById('email').value.trim();
+    const interest = document.getElementById('interest').value;
+    const message  = document.getElementById('message').value.trim();
+    const btn      = document.querySelector('.form-submit');
+    const success  = document.getElementById('form-success');
+
+    if (!name || !phone) {
+      alert('Please enter your name and phone number.');
+      return;
+    }
+
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+
+    try {
+      /* Save to Firebase */
+      await addDoc(collection(db, 'enquiries'), {
+        name, phone, email, interest, message,
+        createdAt: serverTimestamp()
+      });
+
+      /* Send email via EmailJS */
+      await emailjs.send('service_kydxgeq', 'tntpk9h', {
+        from_name:  name,
+        phone:      phone,
+        from_email: email || 'Not provided',
+        interest:   interest || 'Not specified',
+        message:    message || 'No message'
+      });
+
+      /* Show success */
+      btn.style.display = 'none';
+      success.style.display = 'block';
+      success.textContent = '🙏 Thank you ' + name + '! We will contact you shortly.';
+
+      /* Clear fields */
+      ['name','phone','email','message'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('interest').selectedIndex = 0;
+
+      /* Reset button after 5 seconds */
+      setTimeout(() => {
+        btn.style.display = 'block';
+        btn.textContent = 'Send Enquiry';
+        btn.disabled = false;
+        success.style.display = 'none';
+      }, 5000);
+
+    } catch(err) {
+      btn.textContent = 'Send Enquiry';
+      btn.disabled = false;
+      alert('Something went wrong. Please try again or call us directly.');
+      console.error(err);
+    }
+  }
 </script>
 
 </body>
