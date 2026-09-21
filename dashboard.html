@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RR Collections — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --gold: #C9952A; --gold-light: #F0C96B; --gold-dark: #8B6310;
+    --maroon: #6B1A2A; --maroon-lt: #9B3A4A; --maroon-dk: #3E0D17;
+    --cream: #FAF6EF; --cream-dk: #F0E8D8;
+    --text-dk: #1A0A0E; --text-mid: #5C3D45; --text-lt: #8B6B73;
+    --white: #FFFFFF; --sidebar: #2A0810;
+  }
+  body { font-family: 'Inter', sans-serif; background: var(--cream-dk); display: flex; min-height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 240px; min-height: 100vh; background: var(--sidebar);
+    position: fixed; top: 0; left: 0; z-index: 100;
+    display: flex; flex-direction: column;
+  }
+  .sidebar-logo {
+    padding: 24px 20px; border-bottom: 1px solid rgba(201,149,42,0.15);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 600; color: var(--cream);
+  }
+  .sidebar-logo span { color: var(--gold); }
+  .sidebar-logo small { display: block; font-size: 10px; color: rgba(250,246,239,0.35); font-family: 'Inter', sans-serif; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
+  .sidebar-nav { flex: 1; padding: 16px 0; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 20px; cursor: pointer;
+    color: rgba(250,246,239,0.5); font-size: 13px;
+    transition: all 0.2s; border-left: 3px solid transparent;
+  }
+  .nav-item:hover { color: var(--cream); background: rgba(201,149,42,0.08); }
+  .nav-item.active { color: var(--gold-light); border-left-color: var(--gold); background: rgba(201,149,42,0.1); }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(201,149,42,0.15); }
+  .logout-btn {
+    width: 100%; padding: 10px; background: rgba(201,149,42,0.1);
+    border: 1px solid rgba(201,149,42,0.2); border-radius: 4px;
+    color: var(--gold-light); font-size: 12px; cursor: pointer;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    transition: background 0.2s;
+  }
+  .logout-btn:hover { background: rgba(201,149,42,0.2); }
+
+  /* MAIN */
+  .main { margin-left: 240px; flex: 1; padding: 28px; }
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 28px;
+  }
+  .page-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 500; color: var(--maroon-dk); }
+  .page-sub { font-size: 13px; color: var(--text-lt); margin-top: 2px; }
+  .admin-badge {
+    background: var(--maroon); color: var(--cream);
+    padding: 6px 14px; border-radius: 20px; font-size: 12px;
+  }
+
+  /* TABS */
+  .tab-bar { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid rgba(107,26,42,0.1); }
+  .tab {
+    padding: 10px 20px; font-size: 13px; cursor: pointer;
+    color: var(--text-lt); border-bottom: 2px solid transparent;
+    margin-bottom: -1px; transition: all 0.2s;
+  }
+  .tab.active { color: var(--maroon); border-bottom-color: var(--maroon); font-weight: 500; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* STATS */
+  .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--white); border-radius: 6px;
+    padding: 20px; border: 1px solid rgba(201,149,42,0.12);
+  }
+  .stat-card .num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px; font-weight: 500; color: var(--maroon-dk); line-height: 1;
+  }
+  .stat-card .lbl { font-size: 12px; color: var(--text-lt); margin-top: 4px; }
+  .stat-card .icon { font-size: 24px; margin-bottom: 10px; }
+
+  /* CARDS */
+  .card {
+    background: var(--white); border-radius: 6px;
+    border: 1px solid rgba(201,149,42,0.12);
+    overflow: hidden; margin-bottom: 20px;
+  }
+  .card-header {
+    padding: 16px 20px; border-bottom: 1px solid rgba(201,149,42,0.1);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .card-header h3 { font-size: 15px; font-weight: 500; color: var(--maroon-dk); }
+  .card-body { padding: 20px; }
+
+  /* FORM */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: span 2; }
+  .form-group label { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-mid); }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 10px 12px; border: 1px solid rgba(107,26,42,0.18);
+    border-radius: 4px; font-size: 13px; font-family: 'Inter', sans-serif;
+    outline: none; transition: border-color 0.2s; color: var(--text-dk);
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus { border-color: var(--gold); }
+  .form-group textarea { resize: none; min-height: 80px; }
+  .btn-gold {
+    background: var(--gold); color: var(--maroon-dk);
+    padding: 10px 24px; border: none; border-radius: 4px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    letter-spacing: 0.05em; transition: background 0.2s;
+  }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-danger {
+    background: #FEE; color: #C00; border: 1px solid #FCC;
+    padding: 6px 12px; border-radius: 4px; font-size: 12px;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .btn-danger:hover { background: #FDD; }
+  .btn-edit {
+    background: rgba(201,149,42,0.1); color: var(--gold-dark);
+    border: 1px solid rgba(201,149,42,0.3);
+    padding: 6px 12px; border-radius: 4px; font-size: 12px;
+    cursor: pointer; margin-right: 6px;
+  }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; padding: 10px 14px;
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-lt); border-bottom: 1px solid rgba(201,149,42,0.12);
+    background: var(--cream-dk);
+  }
+  td { padding: 12px 14px; font-size: 13px; color: var(--text-dk); border-bottom: 1px solid rgba(201,149,42,0.07); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(201,149,42,0.03); }
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 500;
+  }
+  .badge-new { background: #E6F5EE; color: #085041; }
+  .badge-sale { background: #FEE8E6; color: #8B1A0A; }
+  .badge-popular { background: #E6EEF5; color: #0A1A8B; }
+
+  /* ENQUIRY */
+  .enquiry-card {
+    background: var(--cream-dk); border-radius: 6px;
+    padding: 16px; margin-bottom: 12px;
+    border: 1px solid rgba(201,149,42,0.12);
+  }
+  .enquiry-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .enquiry-name { font-weight: 500; color: var(--maroon-dk); font-size: 14px; }
+  .enquiry-time { font-size: 11px; color: var(--text-lt); }
+  .enquiry-detail { font-size: 13px; color: var(--text-mid); line-height: 1.6; }
+  .enquiry-interest {
+    display: inline-block; background: rgba(201,149,42,0.12);
+    color: var(--gold-dark); padding: 2px 10px; border-radius: 20px;
+    font-size: 11px; margin-top: 8px;
+  }
+
+  .success-msg {
+    display: none; background: #E6F5EE; border: 1px solid #B3E0CC;
+    color: #085041; padding: 10px 14px; border-radius: 4px;
+    font-size: 13px; margin-top: 12px; text-align: center;
+  }
+  .empty-state { text-align: center; padding: 40px; color: var(--text-lt); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    RR <span>Collections</span>
+    <small>Admin Panel</small>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-item active" onclick="showTab('dashboard')">
+      <span class="nav-icon">📊</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="showTab('products')">
+      <span class="nav-icon">📦</span> Products
+    </div>
+    <div class="nav-item" onclick="showTab('add-product')">
+      <span class="nav-icon">➕</span> Add Product
+    </div>
+    <div class="nav-item" onclick="showTab('enquiries')">
+      <span class="nav-icon">📋</span> Enquiries
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <button class="logout-btn" onclick="logoutAdmin()">🚪 Logout</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="page-title">Dashboard</div>
+      <div class="page-sub" id="page-sub">Welcome back, Aditya!</div>
+    </div>
+    <div class="admin-badge">👤 Admin</div>
+  </div>
+
+  <!-- DASHBOARD TAB -->
+  <div class="tab-content active" id="tab-dashboard">
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="icon">📦</div>
+        <div class="num" id="total-products">0</div>
+        <div class="lbl">Total Products</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">📋</div>
+        <div class="num" id="total-enquiries">0</div>
+        <div class="lbl">Total Enquiries</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">🥻</div>
+        <div class="num" id="total-sarees">0</div>
+        <div class="lbl">Saree Products</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">👗</div>
+        <div class="num" id="total-other">0</div>
+        <div class="lbl">Other Products</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Recent Enquiries</h3></div>
+      <div class="card-body" id="recent-enquiries">
+        <div class="empty-state">No enquiries yet. They will appear here when customers contact you.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRODUCTS TAB -->
+  <div class="tab-content" id="tab-products">
+    <div class="card">
+      <div class="card-header">
+        <h3>All Products</h3>
+        <button class="btn-gold" onclick="showTab('add-product')">+ Add New Product</button>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <table>
+          <thead>
+            <tr>
+              <th>Product Name</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Tag</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="products-table">
+            <tr><td colspan="5" class="empty-state">No products added yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD PRODUCT TAB -->
+  <div class="tab-content" id="tab-add-product">
+    <div class="card">
+      <div class="card-header"><h3>Add New Product</h3></div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Product Name</label>
+            <input type="text" id="prod-name" placeholder="e.g. Kanchipuram Silk Saree">
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="prod-category">
+              <option value="">Select category</option>
+              <option>Silk Sarees</option>
+              <option>Cotton Sarees</option>
+              <option>Dress Materials</option>
+              <option>Bridal Collection</option>
+              <option>Fancy Fabrics</option>
+              <option>Ethnic Wear</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Price (₹)</label>
+            <input type="text" id="prod-price" placeholder="e.g. ₹4,500 onwards">
+          </div>
+          <div class="form-group">
+            <label>Tag</label>
+            <select id="prod-tag">
+              <option value="">No tag</option>
+              <option>New</option>
+              <option>Sale</option>
+              <option>Popular</option>
+              <option>Bestseller</option>
+              <option>Exclusive</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Description</label>
+            <textarea id="prod-desc" placeholder="Describe this product..."></textarea>
+          </div>
+          <div class="form-group full">
+            <label>Image Emoji (pick one)</label>
+            <select id="prod-emoji">
+              <option value="🥻">🥻 Saree</option>
+              <option value="🧵">🧵 Thread/Fabric</option>
+              <option value="👗">👗 Dress</option>
+              <option value="✨">✨ Special</option>
+              <option value="🌸">🌸 Floral</option>
+              <option value="🌿">🌿 Cotton</option>
+              <option value="🪡">🪡 Embroidery</option>
+              <option value="👘">👘 Ethnic</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:20px;">
+          <button class="btn-gold" onclick="addProduct()">Save Product</button>
+        </div>
+        <div class="success-msg" id="product-success">✅ Product added successfully!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENQUIRIES TAB -->
+  <div class="tab-content" id="tab-enquiries">
+    <div class="card">
+      <div class="card-header">
+        <h3>Customer Enquiries</h3>
+        <span id="enquiry-count" style="font-size:13px;color:var(--text-lt);">Loading...</span>
+      </div>
+      <div class="card-body" id="enquiries-list">
+        <div class="empty-state">No enquiries yet.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA5s1N2A2dl_eKMaSuviMuHT9O8RCJG4-M",
+    authDomain: "rr-collections.firebaseapp.com",
+    projectId: "rr-collections",
+    storageBucket: "rr-collections.firebasestorage.app",
+    messagingSenderId: "751695680040",
+    appId: "1:751695680040:web:656f9e89b76e7c26909b1d"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  /* Auth guard */
+  onAuthStateChanged(auth, (user) => {
+    if (!user) window.location.href = 'admin.html';
+    else { loadProducts(); loadEnquiries(); }
+  });
+
+  /* Logout */
+  window.logoutAdmin = async () => {
+    await signOut(auth);
+    window.location.href = 'admin.html';
+  };
+
+  /* Tab switcher */
+  window.showTab = (tabName) => {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('tab-' + tabName).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.textContent.toLowerCase().includes(tabName.replace('-', ' '))) n.classList.add('active');
+    });
+    const titles = {
+      'dashboard': ['Dashboard', 'Welcome back, Aditya!'],
+      'products': ['Products', 'Manage your product listings'],
+      'add-product': ['Add Product', 'Add a new product to your store'],
+      'enquiries': ['Enquiries', 'View customer enquiries']
+    };
+    if (titles[tabName]) {
+      document.getElementById('page-title').textContent = titles[tabName][0];
+      document.getElementById('page-sub').textContent   = titles[tabName][1];
+    }
+  };
+
+  /* Load products */
+  async function loadProducts() {
+    try {
+      const snap = await getDocs(collection(db, 'products'));
+      const products = [];
+      snap.forEach(d => products.push({ id: d.id, ...d.data() }));
+
+      document.getElementById('total-products').textContent = products.length;
+      const sarees = products.filter(p => p.category && p.category.toLowerCase().includes('saree'));
+      document.getElementById('total-sarees').textContent = sarees.length;
+      document.getElementById('total-other').textContent  = products.length - sarees.length;
+
+      const tbody = document.getElementById('products-table');
+      if (products.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No products added yet. Click "Add Product" to start!</td></tr>';
+        return;
+      }
+      tbody.innerHTML = products.map(p => `
+        <tr>
+          <td>${p.emoji || '🥻'} ${p.name || '-'}</td>
+          <td>${p.category || '-'}</td>
+          <td>${p.price || '-'}</td>
+          <td>${p.tag ? `<span class="badge badge-new">${p.tag}</span>` : '-'}</td>
+          <td>
+            <button class="btn-danger" onclick="deleteProduct('${p.id}')">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    } catch(e) { console.error(e); }
+  }
+
+  /* Add product */
+  window.addProduct = async () => {
+    const name     = document.getElementById('prod-name').value.trim();
+    const category = document.getElementById('prod-category').value;
+    const price    = document.getElementById('prod-price').value.trim();
+    const tag      = document.getElementById('prod-tag').value;
+    const desc     = document.getElementById('prod-desc').value.trim();
+    const emoji    = document.getElementById('prod-emoji').value;
+
+    if (!name || !category || !price) {
+      alert('Please fill in Name, Category and Price.');
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, 'products'), {
+        name, category, price, tag, desc, emoji,
+        createdAt: serverTimestamp()
+      });
+      document.getElementById('product-success').style.display = 'block';
+      setTimeout(() => document.getElementById('product-success').style.display = 'none', 3000);
+      ['prod-name','prod-price','prod-desc'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('prod-category').selectedIndex = 0;
+      document.getElementById('prod-tag').selectedIndex = 0;
+      loadProducts();
+    } catch(e) { alert('Error saving product: ' + e.message); }
+  };
+
+  /* Delete product */
+  window.deleteProduct = async (id) => {
+    if (!confirm('Delete this product?')) return;
+    try {
+      await deleteDoc(doc(db, 'products', id));
+      loadProducts();
+    } catch(e) { alert('Error: ' + e.message); }
+  };
+
+  /* Load enquiries */
+  async function loadEnquiries() {
+    try {
+      const snap = await getDocs(collection(db, 'enquiries'));
+      const enquiries = [];
+      snap.forEach(d => enquiries.push({ id: d.id, ...d.data() }));
+
+      document.getElementById('total-enquiries').textContent = enquiries.length;
+      document.getElementById('enquiry-count').textContent = enquiries.length + ' total enquiries';
+
+      const recentDiv = document.getElementById('recent-enquiries');
+      const allDiv    = document.getElementById('enquiries-list');
+
+      if (enquiries.length === 0) {
+        recentDiv.innerHTML = '<div class="empty-state">No enquiries yet. They will appear here when customers contact you from your website.</div>';
+        allDiv.innerHTML    = '<div class="empty-state">No enquiries yet.</div>';
+        return;
+      }
+
+      const renderEnquiry = (e) => `
+        <div class="enquiry-card">
+          <div class="enquiry-header">
+            <div class="enquiry-name">👤 ${e.name || 'Unknown'}</div>
+            <div class="enquiry-time">${e.createdAt ? new Date(e.createdAt.seconds*1000).toLocaleDateString('en-IN') : 'Recently'}</div>
+          </div>
+          <div class="enquiry-detail">
+            📞 ${e.phone || '-'} &nbsp;|&nbsp; 📧 ${e.email || '-'}
+            ${e.message ? `<br>💬 ${e.message}` : ''}
+          </div>
+          ${e.interest ? `<span class="enquiry-interest">${e.interest}</span>` : ''}
+        </div>
+      `;
+
+      recentDiv.innerHTML = enquiries.slice(0,3).map(renderEnquiry).join('');
+      allDiv.innerHTML    = enquiries.map(renderEnquiry).join('');
+    } catch(e) { console.error(e); }
+  }
+</script>
+</body>
+</html>
